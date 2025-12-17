@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Registro Spese</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body { background: #f1f3f6; font-size: 1.1rem; }
+.app-card { border-radius: 18px; margin-top: 1rem; }
+label { font-weight: 600; margin-bottom: 0.3rem; }
+.form-control, .form-select { min-height: 52px; font-size: 1.05rem; border-radius: 14px; }
+.btn-save { position: sticky; bottom: 0; width: 100%; border-radius: 0; font-size: 1.2rem; padding: 14px; }
+.alert { border-radius: 14px; }
+.list-group-item:active { opacity: 0.8; }
+</style>
+</head>
+
+<body>
+<div class="container-fluid px-3 pb-5">
+  <div class="card app-card shadow-sm">
+    <div class="card-body">
+      <h4 class="text-center mb-3">💰 Nuova Spesa</h4>
+
+      <form id="spesaForm">
+        <div class="mb-3">
+          <label>📅 Data</label>
+          <input type="date" id="data" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label>⬆️ Entrata</label>
+          <select id="entrata" class="form-select">
+            <option value="">Nessuna</option>
+            <option>Stipendio</option>
+            <option>Altre Entrate</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label>⬇️ Uscita</label>
+          <select id="uscita" class="form-select">
+            <option value="">Nessuna</option>
+             <option>Abbigliamento</option>
+            <option>Auto Altre Spese</option>
+            <option>Auto Assicurazione</option>
+            <option>Auto Benzina</option>
+            <option>Auto Bollo</option>
+            <option>Auto GPL</option>
+            <option>Auto Pedaggi</option>
+            <option>Bollette Fibra</option>
+            <option>Bollette GAS</option>
+            <option>Bollette Luce</option>
+            <option>Bollette SIM</option>
+            <option>Bollette Spazzatura</option>
+            <option>Bollette TV Online</option>
+            <option>Casa</option>
+            <option>Lavoro Altro</option>
+            <option>Lavoro Pranzo</option>
+            <option>Lavanderia</option>
+            <option>Luisanna</option>
+            <option>Mutuo</option>
+            <option>Salute</option>
+            <option>Spesa Alimentari</option>
+            <option>Spese Straordinarie</option>
+            <option>Trasporti Altre Spese</option>
+            <option>Trasporti Roma</option>
+            <option>Uscite</option>
+            <option>Vacanza</option>
+          </select>
+        </div>
+
+        <div class="mb-3">
+          <label>💶 Importo</label>
+          <input type="number" step="0.01" id="importo" class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+          <label>📝 Note</label>
+          <textarea id="note" rows="2" class="form-control"></textarea>
+        </div>
+      </form>
+
+      <div id="messaggio" class="alert alert-success text-center d-none mt-3"></div>
+
+      <hr class="my-4">
+      <h5 class="text-center mb-3">📋 Ultime Spese</h5>
+      <div id="listaSpese" class="list-group"></div>
+      <hr class="my-3">
+      <div id="riepilogoMensile" class="text-center p-2 rounded-3 shadow-sm mb-3">
+        <div>Entrate: <span id="totEntrate">€ 0.00</span></div>
+        <div>Uscite: <span id="totUscite">€ 0.00</span></div>
+        <div>Saldo: <span id="saldoMensile">€ 0.00</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<button class="btn btn-success btn-save" onclick="invia()">💾 Salva</button>
+
+<!-- MODALE MODIFICA -->
+<div class="modal fade" id="modalSpesa" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+    <div class="modal-content rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title">✏️ Modifica Spesa</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editId">
+        <div class="mb-3"><label>Data</label><input type="date" id="editData" class="form-control"></div>
+        <div class="mb-3"><label>Entrata</label>
+          <select id="editEntrata" class="form-select">
+            <option value="">Nessuna</option>
+            <option>Stipendio</option>
+            <option>Altre Entrate</option>
+          </select>
+        </div>
+        <div class="mb-3"><label>Uscita</label>
+          <select id="editUscita" class="form-select">
+            <option value="">Nessuna</option>
+            <option>Abbigliamento</option>
+            <option>Auto Altre Spese</option>
+            <option>Auto Assicurazione</option>
+            <option>Auto Benzina</option>
+            <option>Auto Bollo</option>
+            <option>Auto GPL</option>
+            <option>Auto Pedaggi</option>
+            <option>Bollette Fibra</option>
+            <option>Bollette GAS</option>
+            <option>Bollette Luce</option>
+            <option>Bollette SIM</option>
+            <option>Bollette Spazzatura</option>
+            <option>Bollette TV Online</option>
+            <option>Casa</option>
+            <option>Lavoro Altro</option>
+            <option>Lavoro Pranzo</option>
+            <option>Lavanderia</option>
+            <option>Luisanna</option>
+            <option>Mutuo</option>
+            <option>Salute</option>
+            <option>Spesa Alimentari</option>
+            <option>Spese Straordinarie</option>
+            <option>Trasporti Altre Spese</option>
+            <option>Trasporti Roma</option>
+            <option>Uscite</option>
+            <option>Vacanza</option>
+          </select>
+        </div>
+        <div class="mb-3"><label>Importo</label><input type="number" step="0.01" id="editImporto" class="form-control"></div>
+        <div class="mb-3"><label>Note</label><textarea id="editNote" class="form-control"></textarea></div>
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button class="btn btn-danger" onclick="elimina()">🗑️ Elimina</button>
+        <button class="btn btn-success" onclick="salvaModifica()">💾 Salva</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+document.getElementById("data").valueAsDate = new Date();
+let invioInCorso = false;
+
+function mostraErrore(testo){
+  const box = document.getElementById("messaggio");
+  box.textContent = testo;
+  box.className = "alert alert-danger text-center mt-3 d-block";
+}
+
+function invia(){
+  if (invioInCorso) return;
+
+  const data = document.getElementById("data").value;
+  const entrata = document.getElementById("entrata").value;
+  const uscita = document.getElementById("uscita").value;
+  const importo = parseFloat(document.getElementById("importo").value);
+  const note = document.getElementById("note").value;
+  const msgBox = document.getElementById("messaggio");
+  msgBox.classList.add("d-none");
+
+  if (!data) return mostraErrore("Seleziona una data");
+  if (!entrata && !uscita) return mostraErrore("Seleziona Entrata o Uscita");
+  if (entrata && uscita) return mostraErrore("Seleziona solo una voce");
+  if (!importo || importo <= 0) return mostraErrore("Importo non valido");
+
+  invioInCorso = true;
+
+  google.script.run
+    .withSuccessHandler(msg=>{
+      msgBox.textContent = msg;
+      msgBox.className = "alert alert-success text-center mt-3 d-block";
+      document.getElementById("spesaForm").reset();
+      document.getElementById("data").valueAsDate = new Date();
+      caricaSpese();
+      invioInCorso = false;
+    })
+    .withFailureHandler(err=>{
+      mostraErrore("Errore: "+err.message);
+      invioInCorso = false;
+    })
+    .salvaSpesa(data, entrata, uscita, importo, note);
+}
+
+// Lista spese
+function caricaSpese() {
+  google.script.run.withSuccessHandler(mostraSpese).getUltimeSpese();
+}
+
+function mostraSpese(spese){
+  const lista = document.getElementById("listaSpese");
+  lista.innerHTML = "";
+
+  if(spese.length===0){
+    lista.innerHTML = "<div class='text-center text-muted'>Nessuna spesa</div>";
+    return;
+  }
+
+  spese.forEach(s=>{
+    const colore = s.entrata?"success":"danger";
+    const titolo = s.entrata || s.uscita;
+    const item = document.createElement("a");
+    item.href="#";
+    item.className=`list-group-item list-group-item-${colore} d-flex justify-content-between align-items-center text-start`;
+    item.style.cursor="pointer";
+    item.innerHTML=`
+      <div>
+        <strong>${titolo}</strong><br>
+        <small>${s.data} ${s.note?"• "+s.note:""}</small>
+      </div>
+      <span class="fw-bold">€ ${Number(s.importo).toFixed(2)}</span>
+    `;
+    item.addEventListener("click",e=>{
+      e.preventDefault();
+      apriModale(s);
+    });
+    lista.appendChild(item);
+  });
+}
+
+// MODALE
+let modal = new bootstrap.Modal(document.getElementById("modalSpesa"));
+function apriModale(spesa){
+  document.getElementById("editId").value = spesa.id;
+  document.getElementById("editData").value = spesa.data;
+  document.getElementById("editEntrata").value = spesa.entrata;
+  document.getElementById("editUscita").value = spesa.uscita;
+  document.getElementById("editImporto").value = spesa.importo;
+  document.getElementById("editNote").value = spesa.note;
+  modal.show();
+}
+
+function salvaModifica(){
+  google.script.run
+    .withSuccessHandler(msg=>{
+      modal.hide();
+      caricaSpese();
+    })
+    .withFailureHandler(err=>{
+      alert("Errore: "+err.message);
+    })
+    .aggiornaSpesa(
+      document.getElementById("editId").value,
+      document.getElementById("editData").value,
+      document.getElementById("editEntrata").value,
+      document.getElementById("editUscita").value,
+      document.getElementById("editImporto").value,
+      document.getElementById("editNote").value
+    );
+}
+
+function elimina(){
+  if(!confirm("Eliminare questa spesa?")) return;
+  google.script.run
+    .withSuccessHandler(()=>{
+      modal.hide();
+      caricaSpese();
+    })
+    .withFailureHandler(err=>{
+      alert("Errore: "+err.message);
+    })
+    .eliminaSpesa(document.getElementById("editId").value);
+}
+
+// Carica la lista all'apertura
+window.onload = caricaSpese;
+
+function caricaRiepilogo() {
+  google.script.run.withSuccessHandler(function(riepilogo){
+    document.getElementById("totEntrate").textContent = "€ " + riepilogo.entrate.toFixed(2);
+    document.getElementById("totUscite").textContent = "€ " + riepilogo.uscite.toFixed(2);
+    const saldoEl = document.getElementById("saldoMensile");
+    saldoEl.textContent = "€ " + riepilogo.saldo.toFixed(2);
+    saldoEl.style.color = riepilogo.saldo >= 0 ? "green" : "red";
+  }).getRiepilogoMensile();
+}
+
+// Aggiorna riepilogo ogni volta che carichi la lista
+function caricaSpese() {
+  google.script.run.withSuccessHandler(mostraSpese).getUltimeSpese();
+  caricaRiepilogo();
+}
+
+</script>
+</body>
+</html>
