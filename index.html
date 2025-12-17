@@ -5,10 +5,7 @@
 <title>Registro Spese</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-<!-- PWA Manifest e Theme Color -->
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#198754">
 
 <style>
 body { background: #f1f3f6; font-size: 1.1rem; }
@@ -19,14 +16,6 @@ label { font-weight: 600; margin-bottom: 0.3rem; }
 .alert { border-radius: 14px; }
 .list-group-item:active { opacity: 0.8; }
 </style>
-
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js')
-    .then(() => console.log("Service Worker registrato"))
-    .catch(err => console.log("Service Worker fallito", err));
-}
-</script>
 </head>
 
 <body>
@@ -112,6 +101,92 @@ if ('serviceWorker' in navigator) {
 <button class="btn btn-success btn-save" onclick="invia()">💾 Salva</button>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://script.google.com/macros/s/AKfycbxI5gMH6QU__LnT15brQ3vKgGXfHG01e2LsTg1exeUL5jmWDumGombhLRNdwDNN43UZ/exec"></script>
+
+<script>
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxI5gMH6QU__LnT15brQ3vKgGXfHG01e2LsTg1exeUL5jmWDumGombhLRNdwDNN43UZ/exec";
+document.getElementById("data").valueAsDate = new Date();
+let invioInCorso = false;
+
+function mostraErrore(testo){
+  const box = document.getElementById("messaggio");
+  box.textContent = testo;
+  box.className = "alert alert-danger text-center mt-3 d-block";
+}
+
+// SALVATAGGIO SPESA
+function invia(){
+  if(invioInCorso) return;
+  const data = document.getElementById("data").value;
+  const entrata = document.getElementById("entrata").value;
+  const uscita = document.getElementById("uscita").value;
+  const importo = parseFloat(document.getElementById("importo").value);
+  const note = document.getElementById("note").value;
+  if(!data) return mostraErrore("Seleziona una data");
+  if(!entrata && !uscita) return mostraErrore("Seleziona Entrata o Uscita");
+  if(entrata && uscita) return mostraErrore("Seleziona solo una voce");
+  if(!importo || importo <= 0) return mostraErrore("Importo non valido");
+
+  invioInCorso = true;
+
+  fetch(`${WEB_APP_URL}?action=salvaSpesa&data=${encodeURIComponent(data)}&entrata=${encodeURIComponent(entrata)}&uscita=${encodeURIComponent(uscita)}&importo=${importo}&note=${encodeURIComponent(note)}`)
+    .then(r=>r.text())
+    .then(msg=>{
+      const box = document.getElementById("messaggio");
+      box.textContent = msg;
+      box.className = "alert alert-success text-center mt-3 d-block";
+      document.getElementById("spesaForm").reset();
+      document.getElementById("data").valueAsDate = new Date();
+      caricaSpese();
+      invioInCorso = false;
+    })
+    .catch(err=>{
+      mostraErrore("Errore: "+err.message);
+      invioInCorso = false;
+    });
+}
+
+// CARICA ULTIME SPESE
+function caricaSpese(){
+  fetch(`${WEB_APP_URL}?action=getUltimeSpese`)
+    .then(r=>r.json())
+    .then(spese=>{
+      const lista = document.getElementById("listaSpese");
+      lista.innerHTML = "";
+      if(spese.length===0){
+        lista.innerHTML = "<div class='text-center text-muted'>Nessuna spesa</div>";
+        return;
+      }
+      spese.forEach(s=>{
+        const colore = s.entrata?"success":"danger";
+        const titolo = s.entrata || s.uscita;
+        const item = document.createElement("a");
+        item.href="#";
+        item.className=`list-group-item list-group-item-${colore} d-flex justify-content-between align-items-center text-start`;
+        item.style.cursor="pointer";
+        item.innerHTML=`
+          <div><strong>${titolo}</strong><br><small>${s.data} ${s.note?"• "+s.note:""}</small></div>
+          <span class="fw-bold">€ ${Number(s.importo).toFixed(2)}</span>
+        `;
+        lista.appendChild(item);
+      });
+      caricaRiepilogo();
+    });
+}
+
+// CARICA RIEPILOGO
+function caricaRiepilogo(){
+  fetch(`${WEB_APP_URL}?action=getRiepilogoMensile`)
+    .then(r=>r.json())
+    .then(riepilogo=>{
+      document.getElementById("totEntrate").textContent = "€ " + riepilogo.entrate.toFixed(2);
+      document.getElementById("totUscite").textContent = "€ " + riepilogo.uscite.toFixed(2);
+      const saldoEl = document.getElementById("saldoMensile");
+      saldoEl.textContent = "€ " + riepilogo.saldo.toFixed(2);
+      saldoEl.style.color = riepilogo.saldo >= 0 ? "green" : "red";
+    });
+}
+
+window.onload = caricaSpese;
+</script>
 </body>
 </html>
